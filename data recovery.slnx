@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="data recovery/data recovery.vcxproj" />
+  <Project Path="data recovery/data recovery.vcxproj" Id="ff598cda-7650-43e9-a6e6-c61e3119d7e8" />
 </Solution>
