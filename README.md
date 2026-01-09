@@ -1,6 +1,7 @@
-# Data recovery game
+# Course project №12 'data recovery'
 
 This project is a game, called “data recovery”.
+
 The game takes from user a path to a text file and corruption rate (how “damaged” user wants their text to be)
 The point of the game is to examine all of the corrupted symbols and recover text using the least possible amount of moves.
 
