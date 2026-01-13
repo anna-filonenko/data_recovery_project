@@ -27,6 +27,7 @@ const char GREEN_CODE[] = "\x1b[92m";
 const char ANSI_RESET[] = "\x1b[0m";
 const int ASCII_CONTROL_CHARS = 31;
 const int ASCII_DEL_CODE = 127;
+const char CLEAR_CONSOLE[] = "\033[2J\033[H";
 
 void saveGame(const char* save, const char* text, const char* corruptedText, const char* corruptedCopy, int attemptsCount) {
 	std::ofstream file(save);
@@ -73,7 +74,7 @@ bool isLetter(char symb) {
 	return false;
 }
 
-int wordlen(const char* text, int start) {
+int wordLen(const char* text, int start) {
 	int len = 0;
 	while (isLetter(text[start + len])) {
 		len++;
@@ -153,7 +154,7 @@ bool isCorrupted(const char* corrupted, const char* text, int idx) {
 	return false;
 }
 
-bool guessingMessages(const char* original, char* corrupted, char* options, int symbIndex, int& attemptsCount, int& guess) {
+bool guessingMessages(const char* original, char* corrupted, char* options, int symbIndex, int& mistakesCount, int& guess) {
 	while (true)
 	{
 		std::cout << "your guess: ";
@@ -171,34 +172,43 @@ bool guessingMessages(const char* original, char* corrupted, char* options, int 
 		{
 			std::cout << "you guessed!\n\n";
 			corrupted[symbIndex] = original[symbIndex];
-			attemptsCount++;
 			return true;
 		}
 		else
 			std::cout << "wrong! try again\n";
-		attemptsCount++;
+		mistakesCount++;
 	}
 }
 
-bool guessing(char* corrupted, const char* original, int symbIndex, int& attemptsCount) {
+bool guessing(char* corrupted, const char* original, int symbIndex, int& mistakesCount) {
 	int guess;
 	char options[BIT_VARIATIONS];
 	char temp = corrupted[symbIndex];
 	for (size_t i = 0; i < BIT_VARIATIONS; i++)
 	{
-		options[i] = temp ^ (1 << i);
-		if (options[i] < ASCII_CONTROL_CHARS || options[i] == ASCII_DEL_CODE)
-			options[i] = original[symbIndex];
+		char possibleOption;
+		possibleOption = temp ^ (1 << i);
+		if (possibleOption < ASCII_CONTROL_CHARS || possibleOption == ASCII_DEL_CODE)
+			possibleOption = original[symbIndex];
+		bool isHere = false;
+		for (size_t j = 0; j < i; j++)
+		{
+			if (options[j] == possibleOption)
+			{
+				isHere = true;
+				break;
+			}
+		}
+		if (isHere)
+			possibleOption = original[symbIndex];
+		options[i] = possibleOption;
 	}
-	int answerPosition = rand() % BIT_VARIATIONS;
-	options[answerPosition] = original[symbIndex];
-	//guarantee that there is a correct answer
 	for (size_t i = 0; i < BIT_VARIATIONS; i++)
 	{
 		std::cout << i + 1 << ") " << options[i] << std::endl;
 	}
 	std::cout << "press 0 to cancel\n";
-	return guessingMessages(original, corrupted, options, symbIndex, attemptsCount, guess);
+	return guessingMessages(original, corrupted, options, symbIndex, mistakesCount, guess);
 }
 
 void printTextWithGuessedCharacters(const char* original, const char* corrupted, const char* corruptedCopy) {
@@ -225,18 +235,18 @@ bool gameIsFinished(const char* text, const char* corrupted) {
 	return true;
 }
 
-void mainGameLoop(char* text, char* corruptedText, char* corruptedCopy, int& attemptsCount) {
+void mainGameLoop(char* text, char* corruptedText, char* corruptedCopy, int& mistakesCount) {
 	int userWord, userSymb;
 	printTextWithGuessedCharacters(text, corruptedText, corruptedCopy);
 	std::cout << std::endl;
 	while (true) {
-		std::cout << "enter the number of the word to examine\npress 9 to save and exit\nyour choice: ";
+		std::cout << "enter the number of the word to examine\npress -1 to save and exit\nyour choice: ";
 		std::cin >> userWord;
 		if (userWord == 0)
 			break;
-		if (userWord == 9)
+		if (userWord == -1)
 		{
-			saveGame("save.txt", text, corruptedText, corruptedCopy, attemptsCount);
+			saveGame("save.txt", text, corruptedText, corruptedCopy, mistakesCount);
 			return;
 		}
 		int wordStart = wordStartIdx(text, userWord);
@@ -248,37 +258,44 @@ void mainGameLoop(char* text, char* corruptedText, char* corruptedCopy, int& att
 		}
 		while (true)
 		{
-			std::cout << "enter the number of the symbol to examine\npress 0 to cancel, 9 to save and exit\n your choice:  ";
+			std::cout << "enter the number of the symbol to examine\npress 0 to cancel, -1 to save and exit\nyour choice:  ";
 			std::cin >> userSymb;
 			if (userSymb == 0)
 				break;
-			if (userSymb == 9)
+			if (userSymb == -1)
 			{
-				saveGame("save.txt", text, corruptedText, corruptedCopy, attemptsCount);
+				saveGame("save.txt", text, corruptedText, corruptedCopy, mistakesCount);
 				return;
 			}
+			int wordLength = wordLen(text, userSymb);
 			int symbol = userSymb - 1;
 			int symbolToExamine = wordStart + symbol;
+			if (wordLength < 1)
+			{
+				std::cout << "invalid symbol number!\n";
+				continue;
+			}
 			while (!isCorrupted(corruptedText, text, symbolToExamine))
 			{
 				std::cout << "not a corrupted symbol!\ntry again: ";
 				std::cin >> userSymb;
 				if (userSymb == 0)
 					break;
-				if (userSymb == 9)
+				if (userSymb == -1)
 				{
-					saveGame("save.txt", text, corruptedText, corruptedCopy, attemptsCount);
+					saveGame("save.txt", text, corruptedText, corruptedCopy, mistakesCount);
 					return;
 				}
 				symbol = userSymb - 1;
 				symbolToExamine = wordStart + symbol;
 			}
 			std::cout << "Choose what to change the selected character to: \n";
-			bool isGuessed = guessing(corruptedText, text, symbolToExamine, attemptsCount);
+			bool isGuessed = guessing(corruptedText, text, symbolToExamine, mistakesCount);
+			std::cout << CLEAR_CONSOLE;
 			printTextWithGuessedCharacters(text, corruptedText, corruptedCopy);
 			if (gameIsFinished(text, corruptedText)&&isGuessed)
 			{
-				std::cout << "\ncongratulations! you have recovered the text in just " << attemptsCount << " moves";
+				std::cout << "\ncongratulations! you have recovered the text and made only " << mistakesCount << " mistakes";
 				return;
 			}
 			if (!isGuessed)
