@@ -28,9 +28,33 @@ const char ANSI_RESET[] = "\x1b[0m";
 const int ASCII_CONTROL_CHARS = 31;
 const int ASCII_DEL_CODE = 127;
 
-void saveGame() {}
+void saveGame(const char* save, const char* text, const char* corruptedText, const char* corruptedCopy, int attemptsCount) {
+	std::ofstream file(save);
+	if (!file) {
+		std::cout << "error! can't save the game";
+		return;
+	}
+	file << text << std::endl;
+	file << corruptedText << std::endl;
+	file << corruptedCopy << std::endl;
+	file << attemptsCount << std::endl;
+	file.close();
+	std::cout << "saved succesfully";
+}
 
-void loadGame() {}
+bool loadGame(const char* save, char* text, char* corruptedText, char* corruptedCopy, int& attemptsCount) {
+	std::ifstream file(save);
+	if (!file) {
+		std::cout << "cant't load any games.";
+		return false;
+	}
+	file.getline(text, MAX_TEXT_LEN);
+	file.getline(corruptedText, MAX_TEXT_LEN);
+	file.getline(corruptedCopy, MAX_TEXT_LEN);
+	file >> attemptsCount;
+	file.close();
+	return true;
+}
 
 int textLength(const char* text) {
 	int i = 0;
@@ -67,6 +91,8 @@ void copyText(const char* src, char* dest) {
 }
 
 int wordStartIdx(const char* text, int chosenWordNum) {
+	if (chosenWordNum <= 0)
+		return -1;
 	int wordNumber = 0;
 	bool isInWord = false;
 	int i = 0;
@@ -127,13 +153,14 @@ bool isCorrupted(const char* corrupted, const char* text, int idx) {
 	return false;
 }
 
-bool guessingMessages(const char* original,char*corrupted, char* options, int symbIndex, int& attemptsCount, int& guess) {
+bool guessingMessages(const char* original, char* corrupted, char* options, int symbIndex, int& attemptsCount, int& guess) {
 	while (true)
 	{
+		std::cout << "your guess: ";
 		std::cin >> guess;
 		if (guess<0 || guess>BIT_VARIATIONS)
 		{
-			std::cout << "not an option! try again\n";
+			std::cout << "not an option! try again: ";
 			continue;
 		}
 		if (guess == 0) {
@@ -142,8 +169,9 @@ bool guessingMessages(const char* original,char*corrupted, char* options, int sy
 		char examinedSymbol = options[guess - 1];
 		if (examinedSymbol == original[symbIndex])
 		{
-			std::cout << "you guessed!\n";
+			std::cout << "you guessed!\n\n";
 			corrupted[symbIndex] = original[symbIndex];
+			attemptsCount++;
 			return true;
 		}
 		else
@@ -170,7 +198,7 @@ bool guessing(char* corrupted, const char* original, int symbIndex, int& attempt
 		std::cout << i + 1 << ") " << options[i] << std::endl;
 	}
 	std::cout << "press 0 to cancel\n";
-	return guessingMessages(original,corrupted, options, symbIndex, attemptsCount, guess);
+	return guessingMessages(original, corrupted, options, symbIndex, attemptsCount, guess);
 }
 
 void printTextWithGuessedCharacters(const char* original, const char* corrupted, const char* corruptedCopy) {
@@ -187,45 +215,48 @@ void printTextWithGuessedCharacters(const char* original, const char* corrupted,
 	std::cout << std::endl;
 }
 
-
-
-int main() {
-	std::srand(std::time(0));
-
-	int attemptsCount = 0;
-	char path[MAX_PATH_LEN];
-	double corruptionRate;
-	char text[MAX_TEXT_LEN];
-	char corruptedText[MAX_TEXT_LEN];
-	int userWord;
-	int userSymb = 0;
-
-	std::cout << "enter file path: ";
-	std::cin.getline(path, MAX_PATH_LEN);
-	if (!getTextFromFile(path, text)) {
-		std::cout << "error! Can't open the file!" << std::endl;
-		return -1;
+bool gameIsFinished(const char* text, const char* corrupted) {
+	int i = 0;
+	while (corrupted[i] != '\0') {
+		if (corrupted[i] != text[i])
+			return false;
+		i++;
 	}
-	int length = textLength(text);
-	text[length] = '\0';
-	std::cout << "enter corruption rate: ";
-	std::cin >> corruptionRate;
+	return true;
+}
 
-	std::cin.ignore();
-	corruptText(corruptionRate, length, text, corruptedText);
-	char corruptedCopy[MAX_TEXT_LEN];
-	copyText(corruptedText, corruptedCopy);
-	printCorruptedText(corruptedText, text);
-	std::cout << '\n';
-
+void mainGameLoop(char* text, char* corruptedText, char* corruptedCopy, int& attemptsCount) {
+	int userWord, userSymb;
+	printTextWithGuessedCharacters(text, corruptedText, corruptedCopy);
+	std::cout << std::endl;
 	while (true) {
-		std::cout << "enter the number of the word to examine: ";
+		std::cout << "enter the number of the word to examine\npress 9 to save and exit\nyour choice: ";
 		std::cin >> userWord;
+		if (userWord == 0)
+			break;
+		if (userWord == 9)
+		{
+			saveGame("save.txt", text, corruptedText, corruptedCopy, attemptsCount);
+			return;
+		}
 		int wordStart = wordStartIdx(text, userWord);
+		if (wordStart == -1) {
+			{
+				std::cout << "invalid word number!\n";
+				continue;
+			}
+		}
 		while (true)
 		{
-			std::cout << "enter the number of the symbol to examine (0 to cancel): ";
+			std::cout << "enter the number of the symbol to examine\npress 0 to cancel, 9 to save and exit\n your choice:  ";
 			std::cin >> userSymb;
+			if (userSymb == 0)
+				break;
+			if (userSymb == 9)
+			{
+				saveGame("save.txt", text, corruptedText, corruptedCopy, attemptsCount);
+				return;
+			}
 			int symbol = userSymb - 1;
 			int symbolToExamine = wordStart + symbol;
 			while (!isCorrupted(corruptedText, text, symbolToExamine))
@@ -234,19 +265,71 @@ int main() {
 				std::cin >> userSymb;
 				if (userSymb == 0)
 					break;
+				if (userSymb == 9)
+				{
+					saveGame("save.txt", text, corruptedText, corruptedCopy, attemptsCount);
+					return;
+				}
 				symbol = userSymb - 1;
 				symbolToExamine = wordStart + symbol;
 			}
 			std::cout << "Choose what to change the selected character to: \n";
 			bool isGuessed = guessing(corruptedText, text, symbolToExamine, attemptsCount);
 			printTextWithGuessedCharacters(text, corruptedText, corruptedCopy);
+			if (gameIsFinished(text, corruptedText)&&isGuessed)
+			{
+				std::cout << "\ncongratulations! you have recovered the text in just " << attemptsCount << " moves";
+				return;
+			}
 			if (!isGuessed)
 				continue;
+
 			else
 				break;
 		}
 	}
-
-	/*D:\Desktop\testTrue.txt <- the path I'm using to test the code, putting it here
-	so i can copy it insted of looking for it*/
 }
+
+int main() {
+	std::srand(std::time(0));
+	char text[MAX_TEXT_LEN];
+	char corruptedText[MAX_TEXT_LEN];
+	char corruptedCopy[MAX_TEXT_LEN];
+	int attemptsCount = 0;
+	int choice;
+	std::cout << "\tMAIN MENU\n1. start a new game\n2.load last game\n";
+	std::cin >> choice;
+	switch (choice) {
+	case 1:
+	{
+		std::cin.ignore();
+		char path[MAX_PATH_LEN];
+		double corruptionRate;
+
+		std::cout << "enter file path: ";
+		std::cin.getline(path, MAX_PATH_LEN);
+		if (!getTextFromFile(path, text)) {
+			std::cout << "error! Can't open the file!" << std::endl;
+			return -1;
+		}
+		int length = textLength(text);
+		text[length] = '\0';
+		std::cout << "enter corruption rate: ";
+		std::cin >> corruptionRate;
+
+		std::cin.ignore();
+		corruptText(corruptionRate, length, text, corruptedText);
+		copyText(corruptedText, corruptedCopy);
+
+		mainGameLoop(text, corruptedText, corruptedCopy, attemptsCount);
+		break;
+	}
+	case 2: loadGame("save.txt", text, corruptedText, corruptedCopy, attemptsCount);
+		mainGameLoop(text, corruptedText, corruptedCopy, attemptsCount);
+		break;
+	default:std::cout << "input error";
+		break;
+	}
+}
+/*D:\Desktop\testTrue.txt <- the path I'm using to test the code, putting it here
+so i can copy it insted of looking for it*/
