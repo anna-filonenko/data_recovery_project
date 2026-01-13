@@ -22,10 +22,15 @@
 const int BIT_VARIATIONS = 6;
 const int MAX_PATH_LEN = 260;
 const int MAX_TEXT_LEN = 500;
-const char RED_CODE[] = "\x1b[31m";
+const char RED_CODE[] = "\x1b[91m";
+const char GREEN_CODE[] = "\x1b[92m";
 const char ANSI_RESET[] = "\x1b[0m";
 const int ASCII_CONTROL_CHARS = 31;
 const int ASCII_DEL_CODE = 127;
+
+void saveGame() {}
+
+void loadGame() {}
 
 int textLength(const char* text) {
 	int i = 0;
@@ -51,6 +56,7 @@ int wordlen(const char* text, int start) {
 	}
 	return len;
 }
+
 void copyText(const char* src, char* dest) {
 	int i = 0;
 	while (src[i] != '\0') {
@@ -92,7 +98,7 @@ bool getTextFromFile(const char* path, char* text) {
 }
 
 void corruptText(double corruptionRate, int length, char* text, char* corrupted) {
-	int corruptedSymbolsNum = (length * corruptionRate);
+	int corruptedSymbolsNum = (int)(length * corruptionRate);
 	copyText(text, corrupted);
 	for (size_t i = 0; i < corruptedSymbolsNum; i++)
 	{
@@ -108,9 +114,7 @@ void printCorruptedText(const char* corrupted, const char* text) {
 	while (corrupted[i] != '\0')
 	{
 		if (corrupted[i] != text[i])
-		{
 			std::cout << RED_CODE << corrupted[i] << ANSI_RESET;
-		}
 		else
 			std::cout << corrupted[i];
 		i++;
@@ -123,7 +127,7 @@ bool isCorrupted(const char* corrupted, const char* text, int idx) {
 	return false;
 }
 
-bool guessingMessages(const char* original, char* options, int symbIndex, int& attemptsCount, int& guess) {
+bool guessingMessages(const char* original,char*corrupted, char* options, int symbIndex, int& attemptsCount, int& guess) {
 	while (true)
 	{
 		std::cin >> guess;
@@ -138,7 +142,8 @@ bool guessingMessages(const char* original, char* options, int symbIndex, int& a
 		char examinedSymbol = options[guess - 1];
 		if (examinedSymbol == original[symbIndex])
 		{
-			std::cout << "you guessed!";
+			std::cout << "you guessed!\n";
+			corrupted[symbIndex] = original[symbIndex];
 			return true;
 		}
 		else
@@ -147,7 +152,7 @@ bool guessingMessages(const char* original, char* options, int symbIndex, int& a
 	}
 }
 
-bool guessing(const char* corrupted, const char* original, int symbIndex, int& attemptsCount) {
+bool guessing(char* corrupted, const char* original, int symbIndex, int& attemptsCount) {
 	int guess;
 	char options[BIT_VARIATIONS];
 	char temp = corrupted[symbIndex];
@@ -159,14 +164,29 @@ bool guessing(const char* corrupted, const char* original, int symbIndex, int& a
 	}
 	int answerPosition = rand() % BIT_VARIATIONS;
 	options[answerPosition] = original[symbIndex];
-	//guarantee that there is an answer
+	//guarantee that there is a correct answer
 	for (size_t i = 0; i < BIT_VARIATIONS; i++)
 	{
 		std::cout << i + 1 << ") " << options[i] << std::endl;
 	}
-	std::cout << "press 0 to return to word selection\n";
-	return guessingMessages(original, options, symbIndex, attemptsCount, guess);
+	std::cout << "press 0 to cancel\n";
+	return guessingMessages(original,corrupted, options, symbIndex, attemptsCount, guess);
 }
+
+void printTextWithGuessedCharacters(const char* original, const char* corrupted, const char* corruptedCopy) {
+	int i = 0;
+	while (corrupted[i] != '\0') {
+		if (corrupted[i] == original[i] && (corruptedCopy[i] != original[i]))
+			std::cout << GREEN_CODE << corrupted[i] << ANSI_RESET;
+		else if (corrupted[i] != original[i])
+			std::cout << RED_CODE << corrupted[i] << ANSI_RESET;
+		else
+			std::cout << corrupted[i];
+		i++;
+	}
+	std::cout << std::endl;
+}
+
 
 
 int main() {
@@ -193,29 +213,38 @@ int main() {
 
 	std::cin.ignore();
 	corruptText(corruptionRate, length, text, corruptedText);
+	char corruptedCopy[MAX_TEXT_LEN];
+	copyText(corruptedText, corruptedCopy);
 	printCorruptedText(corruptedText, text);
 	std::cout << '\n';
-	
+
 	while (true) {
 		std::cout << "enter the number of the word to examine: ";
 		std::cin >> userWord;
 		int wordStart = wordStartIdx(text, userWord);
-		std::cout << "enter the number of the symbol to examine: ";
-		std::cin >> userSymb;
-		int symbol = userSymb - 1;
-		int symbolToExamine = wordStart + symbol;
-		while (!isCorrupted(corruptedText, text, symbolToExamine))
+		while (true)
 		{
-			std::cout << "not a corrupted symbol!\ntry again: ";
+			std::cout << "enter the number of the symbol to examine (0 to cancel): ";
 			std::cin >> userSymb;
-			symbol = userSymb - 1;
-			symbolToExamine = wordStart + symbol;
+			int symbol = userSymb - 1;
+			int symbolToExamine = wordStart + symbol;
+			while (!isCorrupted(corruptedText, text, symbolToExamine))
+			{
+				std::cout << "not a corrupted symbol!\ntry again: ";
+				std::cin >> userSymb;
+				if (userSymb == 0)
+					break;
+				symbol = userSymb - 1;
+				symbolToExamine = wordStart + symbol;
+			}
+			std::cout << "Choose what to change the selected character to: \n";
+			bool isGuessed = guessing(corruptedText, text, symbolToExamine, attemptsCount);
+			printTextWithGuessedCharacters(text, corruptedText, corruptedCopy);
+			if (!isGuessed)
+				continue;
+			else
+				break;
 		}
-		std::cout << "Choose what to change the selected character to: \n";
-		if (!guessing(corruptedText, text,symbolToExamine, attemptsCount))
-			continue;
-		else
-			break;
 	}
 
 	/*D:\Desktop\testTrue.txt <- the path I'm using to test the code, putting it here
