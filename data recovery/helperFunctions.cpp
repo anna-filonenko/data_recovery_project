@@ -20,8 +20,7 @@
 int textLength(const char* text) {
 	int i = 0;
 
-	while (text[i] != '\0')
-	{
+	while (text[i] != '\0') {
 		i++;
 	}
 	return i;
@@ -41,8 +40,7 @@ bool isLetter(char symb) {
 int wordLen(const char* text, int start) {
 	int len = 0;
 
-	while (isLetter(text[start + len]))
-	{
+	while (isLetter(text[start + len])) {
 		len++;
 	}
 	return len;
@@ -51,8 +49,7 @@ int wordLen(const char* text, int start) {
 void copyText(const char* src, char* dest) {
 	int i = 0;
 
-	while (src[i] != '\0')
-	{
+	while (src[i] != '\0') {
 		dest[i] = src[i];
 		i++;
 	}
@@ -67,12 +64,9 @@ int wordStartIdx(const char* text, int chosenWordNum) {
 	bool isInWord = false;
 	int i = 0;
 
-	while (text[i] != '\0')
-	{
-		if (isLetter(text[i]))
-		{
-			if (!isInWord)
-			{
+	while (text[i] != '\0') {
+		if (isLetter(text[i])) {
+			if (!isInWord) {
 				wordNumber++;
 				if (wordNumber == chosenWordNum)
 					return i;
@@ -90,8 +84,7 @@ void corruptText(double corruptionRate, int length, char* text, char* corrupted)
 	int corruptedSymbolsNum = (int)(length * corruptionRate);
 	copyText(text, corrupted);
 
-	for (size_t i = 0; i < corruptedSymbolsNum; i++)
-	{
+	for (size_t i = 0; i < corruptedSymbolsNum; i++) {
 		int bitIndex = rand() % BIT_VARIATIONS;
 		int index = rand() % length;
 
@@ -103,8 +96,7 @@ void corruptText(double corruptionRate, int length, char* text, char* corrupted)
 void printCorruptedText(const char* corrupted, const char* text) {
 	int i = 0;
 
-	while (corrupted[i] != '\0')
-	{
+	while (corrupted[i] != '\0') {
 		if (corrupted[i] != text[i])
 			std::cout << RED_CODE << corrupted[i] << ANSI_RESET;
 		else
@@ -130,24 +122,20 @@ bool wordIsCorrupted(const char* text, const char* corrupted, int wordStart) {
 }
 
 bool guessingMessages(const char* original, char* corrupted, char* options, int symbIndex, int& mistakesCount, int& guess) {
-	while (true)
-	{
+	while (true) {
 		std::cout << "your guess: ";
 		std::cin >> guess;
 
-		if (guess<0 || guess>BIT_VARIATIONS)
-		{
+		if (guess<0 || guess>BIT_VARIATIONS) {
 			std::cout << "not an option! try again: ";
 			continue;
 		}
-		if (guess == 0)
-		{
+		if (guess == 0) {
 			return false;
 		}
 		char examinedSymbol = options[guess - 1];
 
-		if (examinedSymbol == original[symbIndex])
-		{
+		if (examinedSymbol == original[symbIndex]) {
 			std::cout << "you guessed!\n\n";
 			corrupted[symbIndex] = original[symbIndex];
 			return true;
@@ -163,8 +151,7 @@ bool guessing(char* corrupted, const char* original, int symbIndex, int& mistake
 	char options[BIT_VARIATIONS];
 	char temp = corrupted[symbIndex];
 
-	for (size_t i = 0; i < BIT_VARIATIONS; i++)
-	{
+	for (size_t i = 0; i < BIT_VARIATIONS; i++) {
 		char possibleOption;
 		possibleOption = temp ^ (1 << i);
 
@@ -173,10 +160,8 @@ bool guessing(char* corrupted, const char* original, int symbIndex, int& mistake
 
 		bool isHere = false;
 
-		for (size_t j = 0; j < i; j++)
-		{
-			if (options[j] == possibleOption)
-			{
+		for (size_t j = 0; j < i; j++) {
+			if (options[j] == possibleOption) {
 				isHere = true;
 				break;
 			}
@@ -190,18 +175,16 @@ bool guessing(char* corrupted, const char* original, int symbIndex, int& mistake
 	int correctIndex = rand() % BIT_VARIATIONS;
 	options[correctIndex] = original[symbIndex];
 
-	for (size_t i = 0; i < BIT_VARIATIONS; i++){
+	for (size_t i = 0; i < BIT_VARIATIONS; i++) {
 		if (i == correctIndex) continue;
 		for (size_t j = 0; j < i; j++) {
-			if (options[i] == options[j])
-			{
+			if (options[i] == options[j]) {
 				options[i] = original[symbIndex];
 			}
 		}
 	}
 
-	for (size_t i = 0; i < BIT_VARIATIONS; i++)
-	{
+	for (size_t i = 0; i < BIT_VARIATIONS; i++) {
 		std::cout << i + 1 << ") " << options[i] << std::endl;
 	}
 
@@ -213,8 +196,7 @@ bool guessing(char* corrupted, const char* original, int symbIndex, int& mistake
 void printTextWithGuessedCharacters(const char* original, const char* corrupted, const char* corruptedCopy) {
 	int i = 0;
 
-	while (corrupted[i] != '\0')
-	{
+	while (corrupted[i] != '\0') {
 		if (corrupted[i] == original[i] && (corruptedCopy[i] != original[i]))
 			std::cout << GREEN_CODE << corrupted[i] << ANSI_RESET;
 		else if (corrupted[i] != original[i])
@@ -228,8 +210,7 @@ void printTextWithGuessedCharacters(const char* original, const char* corrupted,
 
 bool gameIsFinished(const char* text, const char* corrupted) {
 	int i = 0;
-	while (corrupted[i] != '\0')
-	{
+	while (corrupted[i] != '\0') {
 		if (corrupted[i] != text[i])
 			return false;
 		i++;

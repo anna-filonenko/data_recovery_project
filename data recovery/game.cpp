@@ -44,8 +44,7 @@ void startGame() {
 		std::cout << "enter file path: ";
 		std::cin.getline(path, MAX_PATH_LEN);
 
-		if (!getTextFromFile(path, text))
-		{
+		if (!getTextFromFile(path, text)) {
 			std::cout << "error! Can't open the file!" << std::endl;
 			return;
 		}
@@ -57,8 +56,7 @@ void startGame() {
 			std::cout << "Enter corruption rate: ";
 			std::cin >> corruptionRate;
 
-			if (corruptionRate >= 0.0 && corruptionRate <= 1.0)
-			{
+			if (corruptionRate >= 0.0 && corruptionRate <= 1.0) {
 				break;
 			}
 			else
