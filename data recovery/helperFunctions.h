@@ -12,7 +12,5 @@ bool guessingMessages(const char* original, char* corrupted, char* options, int 
 bool guessing(char* corrupted, const char* original, int symbIndex, int& mistakesCount);
 void printTextWithGuessedCharacters(const char* original, const char* corrupted, const char* corruptedCopy);
 bool gameIsFinished(const char* text, const char* corrupted);
-int selectWord(char* text);
-int selectSymbol(const char* text, const char* corrupted, int wordStart);
-void displayText(char* text, char* corruptedText, char* corruptedCopy);
 void mainGameLoop(char* text, char* corruptedText, char* corruptedCopy, int& mistakesCount);
+bool wordIsCorrupted(const char* text, const char* corrupted, int wordStart);
