@@ -9,3 +9,4 @@ const char ANSI_RESET[] = "\x1b[0m";
 const int ASCII_CONTROL_CHARS = 31;
 const int ASCII_DEL_CODE = 127;
 const char CLEAR_CONSOLE[] = "\033[2J\033[H";
+const int ASCII_TOTAL = 128;

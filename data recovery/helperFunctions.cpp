@@ -126,7 +126,7 @@ bool guessingMessages(const char* original, char* corrupted, char* options, int 
 		std::cout << "your guess: ";
 		std::cin >> guess;
 
-		if (guess<0 || guess>BIT_VARIATIONS) {
+		if (guess < 0 || guess > BIT_VARIATIONS) {
 			std::cout << "not an option! try again: ";
 			continue;
 		}
@@ -149,45 +149,29 @@ bool guessingMessages(const char* original, char* corrupted, char* options, int 
 bool guessing(char* corrupted, const char* original, int symbIndex, int& mistakesCount) {
 	int guess;
 	char options[BIT_VARIATIONS];
-	char temp = corrupted[symbIndex];
 
-	for (size_t i = 0; i < BIT_VARIATIONS; i++) {
-		char possibleOption;
-		possibleOption = temp ^ (1 << i);
+	int correctIdx = rand() % BIT_VARIATIONS;
+	options[correctIdx] = original[symbIndex];
 
-		if (possibleOption < ASCII_CONTROL_CHARS || possibleOption == ASCII_DEL_CODE)
-			possibleOption = original[symbIndex];
+	bool isUsed[ASCII_TOTAL] = { false };
+	isUsed[original[symbIndex]] = true;
 
-		bool isHere = false;
+	for (size_t i = 0; i < BIT_VARIATIONS; i++)
+	{
+		if (i == correctIdx)
+			continue;
 
-		for (size_t j = 0; j < i; j++) {
-			if (options[j] == possibleOption) {
-				isHere = true;
-				break;
-			}
-		}
-		if (isHere)
-			possibleOption = original[symbIndex];
+		char option;
+		do {
+			option = ASCII_CONTROL_CHARS + rand() % (ASCII_TOTAL - ASCII_CONTROL_CHARS) - 1;
+		} while (isUsed[option]);
 
-		options[i] = possibleOption;
+		options[i] = option;
+		isUsed[option] = true;
 	}
-
-	int correctIndex = rand() % BIT_VARIATIONS;
-	options[correctIndex] = original[symbIndex];
-
-	for (size_t i = 0; i < BIT_VARIATIONS; i++) {
-		if (i == correctIndex) continue;
-		for (size_t j = 0; j < i; j++) {
-			if (options[i] == options[j]) {
-				options[i] = original[symbIndex];
-			}
-		}
-	}
-
 	for (size_t i = 0; i < BIT_VARIATIONS; i++) {
 		std::cout << i + 1 << ") " << options[i] << std::endl;
 	}
-
 	std::cout << "press 0 to cancel\n";
 
 	return guessingMessages(original, corrupted, options, symbIndex, mistakesCount, guess);
@@ -224,7 +208,7 @@ void mainGameLoop(char* text, char* corruptedText, char* corruptedCopy, int& mis
 	std::cout << std::endl;
 
 	while (true) {
-		std::cout << "Enter the number of the word to examine (-1 to save and exit): ";
+		std::cout << "Enter the number of the word to examine (-1 to save and exit)\nyour choice: ";
 
 		std::cin >> userWord;
 
@@ -249,13 +233,13 @@ void mainGameLoop(char* text, char* corruptedText, char* corruptedCopy, int& mis
 		int len = wordLen(text, wordStart);
 
 		while (true) {
-			std::cout << "Enter the number of the symbol to examine (0 cancel, -1 save and exit): ";
+			std::cout << "Enter the number of the symbol to examine (0 cancel, -1 save and exit)\nyour choice: ";
 			std::cin >> userSymb;
 			if (userSymb == 0) break;
 			if (userSymb == -1) { saveGame("save.txt", text, corruptedText, corruptedCopy, mistakesCount); return; }
 
 			if (userSymb < 1 || userSymb > len) {
-				std::cout << "Invalid symbol number!\n";
+				std::cout << "Invalid symbol number!\n ";
 				continue;
 			}
 
@@ -271,7 +255,7 @@ void mainGameLoop(char* text, char* corruptedText, char* corruptedCopy, int& mis
 				printTextWithGuessedCharacters(text, corruptedText, corruptedCopy);
 
 				if (gameIsFinished(text, corruptedText)) {
-					std::cout << "\nCongratulations! You recovered the text and made just " << mistakesCount << " mistakes\n";
+					std::cout << "\nCongratulations! You recovered the text and made " << mistakesCount << " mistakes\n";
 					return;
 				}
 				break;

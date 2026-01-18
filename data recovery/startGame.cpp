@@ -33,7 +33,7 @@ void startGame() {
 	std::cout << "\tMAIN MENU\n1. start a new game\n2.load last game\n";
 	std::cin >> choice;
 
-	switch (choice){
+	switch (choice) {
 	
 	case 1:
 	{
@@ -70,9 +70,15 @@ void startGame() {
 		mainGameLoop(text, corruptedText, corruptedCopy, attemptsCount);
 		break;
 	}
-	case 2: loadGame("save.txt", text, corruptedText, corruptedCopy, attemptsCount);
+	case 2:
+	{
+		if (!loadGame("save.txt", text, corruptedText, corruptedCopy, attemptsCount))
+			return;
+		loadGame("save.txt", text, corruptedText, corruptedCopy, attemptsCount);
 		mainGameLoop(text, corruptedText, corruptedCopy, attemptsCount);
+
 		break;
+	}
 
 	default:std::cout << "input error";
 		break;

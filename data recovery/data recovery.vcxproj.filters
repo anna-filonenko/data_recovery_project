@@ -24,7 +24,7 @@
     <ClCompile Include="helperFunctions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="game.cpp">
+    <ClCompile Include="startGame.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
