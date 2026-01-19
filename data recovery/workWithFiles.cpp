@@ -18,6 +18,9 @@
 #include "constants.h"
 
 void saveGame(const char* save, const char* text, const char* corruptedText, const char* corruptedCopy, int attemptsCount) {
+	if (!save || !text || !corruptedText || !corruptedCopy)
+		return;
+
 	std::ofstream file(save);
 	if (!file) {
 		std::cout << "error! can't save the game";
@@ -32,7 +35,11 @@ void saveGame(const char* save, const char* text, const char* corruptedText, con
 }
 
 bool loadGame(const char* save, char* text, char* corruptedText, char* corruptedCopy, int& attemptsCount) {
+	if (!save || !text || !corruptedText || !corruptedCopy)
+		return false;
+
 	std::ifstream file(save);
+
 	if (!file) {
 		std::cout << "cant't load any games.";
 		return false;

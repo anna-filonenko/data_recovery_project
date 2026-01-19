@@ -50,7 +50,6 @@ void startGame() {
 		}
 
 		int length = textLength(text);
-		text[length] = '\0';
 		
 		while (true) {
 			std::cout << "Enter corruption rate: ";
