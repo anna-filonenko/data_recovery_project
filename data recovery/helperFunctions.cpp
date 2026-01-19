@@ -305,6 +305,5 @@ void mainGameLoop(char* text, char* corrupted, char* corruptedCopy, int& mistake
 				}
 			}
 		}
-		std::cout << "\nyou have recovered a word!\n\n";
 	}
 }
